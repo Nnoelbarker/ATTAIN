@@ -76,29 +76,30 @@ plt.tight_layout()
 plt.savefig("figures/bland_altman.png", dpi=300)
 plt.close()
 
-#Figure2 histogram
+
+#Histogram
 data = df["Med_lat"].dropna()
 plt.figure(figsize=(8, 5))
 
-# Histogram
-plt.hist(data, bins=15, density=True, alpha=0.6, edgecolor="black", color='white')  # white bars for B/W
+#histogram frequency
+counts, bins, patches = plt.hist(data, bins=7, alpha=0.6, edgecolor="black", color='gray', label='Data')
+
+#x=1 line
 plt.axvline(1, color="black", linestyle="--", linewidth=1.5, label="x=1")
 
+#normal distribution
 mu, std = stats.norm.fit(data)
-xmin, xmax = plt.xlim()
-x = np.linspace(xmin, xmax, 100)
-p = stats.norm.pdf(x, mu, std)
+x = np.linspace(bins[0], bins[-1], 100)
+bin_width = bins[1] - bins[0]
+p = stats.norm.pdf(x, mu, std) * len(data) * bin_width  # scale to histogram counts
 plt.plot(x, p, 'k', linewidth=2, label="Normal distribution")
 
+#labels
 plt.xlabel("Size of medial CSA as a factor compared to lateral CSA", fontsize=10)
 plt.ylabel("Frequency", fontsize=10)
-plt.legend(frameon=False, fontsize=9)  # cleaner legend
-plt.xticks(fontsize=10)
-plt.yticks(fontsize=10)
-
+plt.legend()
 plt.tight_layout()
+
+
 plt.savefig("figures/Med_lat_hist.png", dpi=300)
 plt.close()
-
-plt.savefig("figures/bland_altman.png", dpi=300)
-plt.savefig("figures/Med_lat_hist.png", dpi=300)
