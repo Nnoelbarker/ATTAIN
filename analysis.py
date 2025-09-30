@@ -5,20 +5,18 @@ from scipy import stats
 from pingouin import intraclass_corr
 import os
 
-# Ensure output folder exists
 os.makedirs("figures", exist_ok=True)
 
-# Load data
 df = pd.read_excel("Attain_data_2025.xlsx")
 
-# ----- Bland-Altman Plot Function -----
+#Bland-Altman Plot Function
 def bland_altman_plot(data1, data2, ax, title="Bland-Altman", ylabel="Difference"):
     mean = np.mean([data1, data2], axis=0)
     diff = data1 - data2
     md = np.mean(diff)            # mean difference
     sd = np.std(diff, axis=0)     # standard deviation of difference
 
-    # Scatter and lines (black & white)
+
     ax.scatter(mean, diff, color='black', alpha=0.6, edgecolor='black', s=50)
     ax.axhline(md, color='black', linestyle='--', linewidth=1.5, label="Mean difference")
     ax.axhline(md + 1.96*sd, color='gray', linestyle='--', linewidth=1, label="±1.96 SD")
@@ -30,7 +28,7 @@ def bland_altman_plot(data1, data2, ax, title="Bland-Altman", ylabel="Difference
     ax.tick_params(axis='both', which='major', labelsize=10)
     ax.grid(False)
 
-# ----- ICC Calculations -----
+#ICC
 icc_data = pd.melt(
     df[["Participant", "M1", "M2", "M3"]],
     id_vars=["Participant"],
@@ -55,7 +53,31 @@ print(icc_intra)
 print("\nInter-rater ICC (M1 vs M2):")
 print(icc_inter)
 
-# ----- Bland-Altman Figures -----
+#SEM and MDC
+def calc_sem_mdc(data1, data2, icc_df, icc_type='ICC2'):
+    """
+    Calculate SEM and MDC from raw scores and ICC.
+    icc_type: column in ICC DataFrame to use, e.g., 'ICC2'
+    """
+    icc_val = icc_df.loc[icc_df['Type'] == icc_type, 'ICC'].values[0]
+    diff = data1 - data2
+    sd_diff = diff.std(ddof=1)  # sample SD
+    sem = sd_diff * np.sqrt(1 - icc_val)
+    mdc = sem * 1.96 * np.sqrt(2)
+    return sem, mdc
+
+# Intra-rater (M1 vs M3)
+sem_intra, mdc_intra = calc_sem_mdc(df['M1'], df['M3'], icc_intra)
+print(f"Intra-rater SEM (M1 vs M3): {sem_intra:.3f}")
+print(f"Intra-rater MDC (M1 vs M3): {mdc_intra:.3f}")
+
+# Inter-rater (M1 vs M2)
+sem_inter, mdc_inter = calc_sem_mdc(df['M1'], df['M2'], icc_inter)
+print(f"Inter-rater SEM (M1 vs M2): {sem_inter:.3f}")
+print(f"Inter-rater MDC (M1 vs M2): {mdc_inter:.3f}")
+
+
+#Bland-Altman Figures
 fig, axes = plt.subplots(1, 2, figsize=(14, 6))
 
 # Intrarater
